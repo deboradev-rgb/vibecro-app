@@ -1,0 +1,53 @@
+/* [project]/vibecro.app/src/styles/orange-theme.css [app-client] (css) */
+.btn-orange {
+  color: #fff !important;
+  background-color: #e38f00 !important;
+  border-color: #e38f00 !important;
+}
+
+.btn-orange:hover {
+  background-color: #cc8100 !important;
+  border-color: #cc8100 !important;
+}
+
+a.text-orange {
+  color: #e38f00 !important;
+}
+
+a.text-orange:hover {
+  color: #cc8100 !important;
+}
+
+.border-orange {
+  border-color: #e38f00 !important;
+}
+
+.bg-orange {
+  background-color: #e38f00 !important;
+}
+
+.bg-orange-light {
+  background-color: #fef6e6 !important;
+}
+
+.gradient-orange {
+  background: linear-gradient(135deg, #e38f00 0%, #f59e0b 100%) !important;
+}
+
+.bg-primary-500 {
+  background-color: #e38f00 !important;
+}
+
+.hover\:bg-primary-600:hover {
+  background-color: #cc8100 !important;
+}
+
+.from-primary-500 {
+  --tw-gradient-from: #e38f00 !important;
+}
+
+.to-primary-600 {
+  --tw-gradient-to: #cc8100 !important;
+}
+
+/*# sourceMappingURL=vibecro_app_src_styles_orange-theme_css_bad6b30c._.single.css.map*/

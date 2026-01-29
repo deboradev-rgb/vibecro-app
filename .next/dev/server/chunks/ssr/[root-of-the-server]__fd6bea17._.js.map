@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/CJPR%20TTG/Vibecro/vibecro.app/src/app/services/page.tsx"],"sourcesContent":["<div className=\"grid lg:grid-cols-2 gap-12 items-center\">\r\n  {/* Texte à gauche */}\r\n  <div className=\"text-left\">\r\n    {/* Contenu texte */}\r\n  </div>\r\n  \r\n  {/* Image/Visual à droite */}\r\n  <div className=\"relative\">\r\n    {/* Image avec dégradé orange et éléments visuels */}\r\n  </div>\r\n</div>"],"names":[],"mappings":";;cAAA,QAAC;IAAI,WAAU;;sBAEb,QAAC;YAAI,WAAU;;;;;;sBAKf,QAAC;YAAI,WAAU"}}]
+}
