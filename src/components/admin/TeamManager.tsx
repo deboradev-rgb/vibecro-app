@@ -1,4 +1,3 @@
-// src/components/admin/TeamManager.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { teamAPI } from '@/lib/apiClient';
 import { Upload, X, User, Loader2, Edit2, Trash2, CheckCircle } from 'lucide-react';

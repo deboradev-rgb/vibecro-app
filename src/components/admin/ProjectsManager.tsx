@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { handleApiError } from '../../lib/apiClient';
-import { 
-  Save, X, AlertCircle, Upload, CheckCircle, Plus, Loader2, 
-  Edit, Trash2, Image as ImageIcon, Calendar, Link as LinkIcon 
+import {
+  Save, X, AlertCircle, Upload, CheckCircle, Plus, Loader2,
+  Edit, Trash2, Image as ImageIcon, Calendar, Link as LinkIcon
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://newvibecroapi.vibecro.com/api';
 
 interface ProjectFormData {
   title: string;
@@ -31,7 +31,12 @@ interface Project {
   created_at: string;
 }
 
-export default function ProjectsManager() {
+// ← Ajout important : typage des props (résout l'erreur IntrinsicAttributes)
+interface ProjectsManagerProps {
+  onProjectAdded?: () => void;
+}
+
+export default function ProjectsManager({ onProjectAdded }: ProjectsManagerProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,12 +56,14 @@ export default function ProjectsManager() {
 
   const apiClient = axios.create({
     baseURL: API_URL,
-    headers: { 'Accept': 'application/json' },
+    headers: { Accept: 'application/json' },
   });
 
   apiClient.interceptors.request.use((config) => {
     const token = localStorage.getItem('auth_token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   });
 
@@ -67,23 +74,30 @@ export default function ProjectsManager() {
   const fetchProjects = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const response = await apiClient.get('/projects');
-      const list = Array.isArray(response.data?.data) 
-        ? response.data.data 
-        : Array.isArray(response.data) 
-          ? response.data 
+
+      const data = response.data;
+      const list = Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data)
+          ? data
           : [];
+
       setProjects(list);
     } catch (err) {
+      console.error('Erreur fetch projects:', err);
       setError('Impossible de charger les projets');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,11 +111,11 @@ export default function ProjectsManager() {
 
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      setError('Format non supporté');
+      setError('Format non supporté (JPG, PNG, GIF, WebP)');
       return;
     }
 
-    setFormData(prev => ({ ...prev, image: file }));
+    setFormData((prev) => ({ ...prev, image: file }));
 
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
@@ -109,7 +123,7 @@ export default function ProjectsManager() {
   };
 
   const handleRemoveImage = () => {
-    setFormData(prev => ({ ...prev, image: null }));
+    setFormData((prev) => ({ ...prev, image: null }));
     setImagePreview(null);
   };
 
@@ -121,12 +135,15 @@ export default function ProjectsManager() {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title.trim());
-      formDataToSend.append('link', formData.lien.trim());
+      formDataToSend.append('link', formData.lien.trim()); // attention : backend attend "link" ?
       formDataToSend.append('status', formData.status);
       formDataToSend.append('description', formData.description.trim());
 
       if (formData.technologies.trim()) {
-        const techs = formData.technologies.split(',').map(t => t.trim()).filter(Boolean);
+        const techs = formData.technologies
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean);
         formDataToSend.append('technologies', techs.join(', '));
       }
 
@@ -135,18 +152,22 @@ export default function ProjectsManager() {
       }
 
       if (editingId) {
-        await apiClient.post(`/projects/${editingId}?_method=PUT`, formDataToSend);
+        // Laravel accepte souvent POST + _method=PUT
+        formDataToSend.append('_method', 'PUT');
+        await apiClient.post(`/projects/${editingId}`, formDataToSend);
         setSuccessMessage('Projet modifié avec succès !');
       } else {
         await apiClient.post('/projects', formDataToSend);
         setSuccessMessage('Projet ajouté avec succès !');
+        onProjectAdded?.(); // ← Appel de la prop quand un projet est créé
       }
 
       await fetchProjects();
       resetForm(true);
     } catch (err: any) {
-      const errMsg = handleApiError ? handleApiError(err) : 'Erreur lors de la sauvegarde';
+      const errMsg = handleApiError?.(err) ?? 'Erreur lors de la sauvegarde';
       setError(errMsg);
+      console.error('Erreur submit projet:', err);
     }
   };
 
@@ -155,7 +176,7 @@ export default function ProjectsManager() {
       title: project.title,
       technologies: project.technologies || '',
       image: null,
-      lien: project.lien || project.link || '',
+      lien: project.lien || '',
       status: project.status,
       description: project.description || '',
     });
@@ -173,6 +194,7 @@ export default function ProjectsManager() {
       await fetchProjects();
     } catch (err) {
       setError('Erreur lors de la suppression');
+      console.error('Erreur delete:', err);
     }
   };
 
@@ -204,7 +226,7 @@ export default function ProjectsManager() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="w-10 h-10 animate-spin text-[#e38f00]" />
       </div>
     );
@@ -212,7 +234,6 @@ export default function ProjectsManager() {
 
   return (
     <div className="space-y-8">
-      {/* Messages */}
       {error && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -235,7 +256,7 @@ export default function ProjectsManager() {
         </motion.div>
       )}
 
-      {/* En-tête */}
+      {/* En-tête + bouton nouveau */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white">Gestion des projets</h2>
@@ -246,7 +267,7 @@ export default function ProjectsManager() {
 
         <button
           onClick={() => (showForm ? resetForm(true) : setShowForm(true))}
-          className="bg-gradient-to-r from-[#e38f00] to-[#d48500] text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-[#e38f00]/30 transition-all flex items-center gap-2"
+          className="bg-gradient-to-r from-[#e38f00] to-[#d48500] text-white px-6 py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-[#e38f00]/30 transition-all flex items-center gap-2 whitespace-nowrap"
         >
           {showForm ? (
             <>
@@ -260,7 +281,6 @@ export default function ProjectsManager() {
         </button>
       </div>
 
-      {/* Formulaire */}
       {showForm && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -272,7 +292,6 @@ export default function ProjectsManager() {
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Titre */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Titre du projet <span className="text-red-400">*</span>
@@ -287,7 +306,6 @@ export default function ProjectsManager() {
               />
             </div>
 
-            {/* Lien */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Lien du projet <span className="text-red-400">*</span>
@@ -302,11 +320,10 @@ export default function ProjectsManager() {
                   placeholder="https://..."
                   className="w-full px-5 py-4 pl-12 bg-gray-800/70 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#e38f00] focus:ring-2 focus:ring-[#e38f00]/30 transition-all"
                 />
-                <LinkIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
             </div>
 
-            {/* Technologies */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Technologies (séparées par virgule)
@@ -321,7 +338,6 @@ export default function ProjectsManager() {
               />
             </div>
 
-            {/* Statut */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Statut</label>
               <select
@@ -335,7 +351,6 @@ export default function ProjectsManager() {
               </select>
             </div>
 
-            {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Description du projet
@@ -350,13 +365,9 @@ export default function ProjectsManager() {
               />
             </div>
 
-            {/* Image */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Image du projet
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Image du projet</label>
               <div className="flex flex-col sm:flex-row items-start gap-6">
-                {/* Aperçu */}
                 <div className="relative w-40 h-40 rounded-xl overflow-hidden bg-gray-800 border border-gray-700">
                   {imagePreview ? (
                     <>
@@ -376,22 +387,21 @@ export default function ProjectsManager() {
                   )}
                 </div>
 
-                {/* Upload */}
                 <div className="flex-1">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
                     onChange={handleFileChange}
                     className="hidden"
+                    id="project-image-upload"
                   />
-                  <button
-                    type="button"
-                    onClick={() => document.querySelector('input[type="file"]')?.click()}
-                    className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all"
+                  <label
+                    htmlFor="project-image-upload"
+                    className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-xl items-center gap-2 transition-all cursor-pointer inline-flex"
                   >
                     <Upload size={18} />
                     Choisir une image
-                  </button>
+                  </label>
                   <p className="text-sm text-gray-500 mt-2">
                     JPG, PNG, GIF, WebP • Max 2 Mo
                   </p>
@@ -399,7 +409,6 @@ export default function ProjectsManager() {
               </div>
             </div>
 
-            {/* Boutons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-end pt-6">
               <button
                 type="button"
@@ -420,7 +429,6 @@ export default function ProjectsManager() {
         </motion.div>
       )}
 
-      {/* Liste des projets */}
       {projects.length === 0 ? (
         <div className="text-center py-16 bg-gray-900/50 border border-gray-800 rounded-2xl">
           <ImageIcon className="w-16 h-16 mx-auto mb-4 text-gray-500" />
@@ -434,21 +442,20 @@ export default function ProjectsManager() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map(project => (
+          {projects.map((project) => (
             <motion.div
               key={project.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-gray-900/70 backdrop-blur-xl border border-gray-800/50 rounded-2xl shadow-xl overflow-hidden hover:border-[#e38f00]/50 transition-all"
+              className="bg-gray-900/70 backdrop-blur-xl border border-gray-800/50 rounded-2xl shadow-xl overflow-hidden hover:border-[#e38f00]/50 transition-all duration-300"
             >
-              {/* Image */}
               <div className="relative h-48 overflow-hidden">
                 {project.image_url ? (
                   <img
                     src={project.image_url}
                     alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                   />
                 ) : (
                   <div className="w-full h-full bg-gray-800 flex items-center justify-center">
@@ -458,9 +465,7 @@ export default function ProjectsManager() {
               </div>
 
               <div className="p-6">
-                <h4 className="text-lg font-bold text-white mb-2 line-clamp-2">
-                  {project.title}
-                </h4>
+                <h4 className="text-lg font-bold text-white mb-2 line-clamp-2">{project.title}</h4>
 
                 <div className="flex items-center justify-between mb-4">
                   {getStatusBadge(project.status)}

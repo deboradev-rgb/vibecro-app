@@ -1,10 +1,10 @@
 // src/components/admin/ContactMessagesManager.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { contactAPI } from '@/lib/apiClient';
 import { motion } from 'framer-motion';
-import { 
-  Mail, Phone, Clock, CheckCircle, XCircle, Reply, Trash2, 
-  Loader2, ChevronLeft, ChevronRight, Search 
+import {
+  Mail, CheckCircle, XCircle, Reply, Trash2,
+  Loader2, ChevronLeft, Search
 } from 'lucide-react';
 
 interface ContactMessage {
@@ -19,11 +19,16 @@ interface ContactMessage {
   created_at: string;
 }
 
-export default function ContactMessagesManager() {
+// Typage des props (important pour éviter l'erreur IntrinsicAttributes dans Dashboard)
+interface ContactMessagesManagerProps {
+  onMessageProcessed?: () => void;  // Appelée quand un message est marqué lu/répondu/supprimé
+}
+
+export default function ContactMessagesManager({ onMessageProcessed }: ContactMessagesManagerProps) {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string>('');
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const [replyText, setReplyText] = useState('');
 
@@ -34,10 +39,12 @@ export default function ContactMessagesManager() {
   const fetchMessages = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const response = await contactAPI.getAll();
-      setMessages(response.data || []);
+      setMessages(Array.isArray(response.data) ? response.data : []);
     } catch (err: any) {
-      setError('Erreur lors du chargement des messages');
+      console.error('Erreur chargement messages:', err);
+      setError('Impossible de charger les messages de contact');
     } finally {
       setIsLoading(false);
     }
@@ -46,8 +53,10 @@ export default function ContactMessagesManager() {
   const handleMarkAsRead = async (id: number) => {
     try {
       await contactAPI.update(id, { status: 'read' });
+      onMessageProcessed?.();
       fetchMessages();
     } catch (err) {
+      console.error('Erreur mark as read:', err);
       setError('Erreur lors de la mise à jour du statut');
     }
   };
@@ -61,13 +70,15 @@ export default function ContactMessagesManager() {
     try {
       await contactAPI.update(id, {
         status: 'replied',
-        admin_reply: replyText,
+        admin_reply: replyText.trim(),
       });
       setSuccessMessage('Réponse envoyée avec succès !');
       setReplyText('');
       setSelectedMessage(null);
+      onMessageProcessed?.();
       fetchMessages();
     } catch (err) {
+      console.error('Erreur envoi réponse:', err);
       setError('Erreur lors de l\'envoi de la réponse');
     }
   };
@@ -77,15 +88,17 @@ export default function ContactMessagesManager() {
 
     try {
       await contactAPI.delete(id);
-      setSuccessMessage('Message supprimé');
+      setSuccessMessage('Message supprimé avec succès');
       setSelectedMessage(null);
+      onMessageProcessed?.();
       fetchMessages();
     } catch (err) {
-      setError('Erreur lors de la suppression');
+      console.error('Erreur suppression:', err);
+      setError('Erreur lors de la suppression du message');
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: ContactMessage['status']) => {
     const styles = {
       new: 'bg-red-600/20 text-red-300 border-red-500/30',
       read: 'bg-yellow-600/20 text-yellow-300 border-yellow-500/30',
@@ -99,15 +112,15 @@ export default function ContactMessagesManager() {
     };
 
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[status as keyof typeof styles]}`}>
-        {labels[status as keyof typeof labels]}
+      <span className={`inline-flex px-3 py-1 text-xs font-medium border rounded-full ${styles[status]}`}>
+        {labels[status]}
       </span>
     );
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="w-10 h-10 animate-spin text-[#e38f00]" />
       </div>
     );
@@ -115,7 +128,6 @@ export default function ContactMessagesManager() {
 
   return (
     <div className="space-y-8">
-      {/* Messages */}
       {error && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -138,7 +150,6 @@ export default function ContactMessagesManager() {
         </motion.div>
       )}
 
-      {/* En-tête */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white">Messages de contact</h2>
@@ -148,7 +159,7 @@ export default function ContactMessagesManager() {
         </div>
 
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
             placeholder="Rechercher un message..."
@@ -157,11 +168,11 @@ export default function ContactMessagesManager() {
         </div>
       </div>
 
-      {/* Liste ou détail */}
       {selectedMessage ? (
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
           className="bg-gray-900/70 backdrop-blur-xl border border-gray-800/50 rounded-2xl shadow-2xl p-6 sm:p-8"
         >
           <div className="flex items-center justify-between mb-6">
@@ -216,7 +227,7 @@ export default function ContactMessagesManager() {
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Tapez votre réponse ici..."
-                className="w-full px-5 py-4 bg-gray-800/70 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#e38f00] focus:ring-2 focus:ring-[#e38f00]/30 transition-all min-h-[140px]"
+                className="w-full px-5 py-4 bg-gray-800/70 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#e38f00] focus:ring-2 focus:ring-[#e38f00]/30 transition-all min-h-[140px] resize-y"
                 rows={6}
               />
 
@@ -245,7 +256,7 @@ export default function ContactMessagesManager() {
           {messages.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <Mail className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-xl font-semibold mb-2">Aucun message</h3>
+              <h3 className="text-xl font-semibold mb-2">Aucun message pour le moment</h3>
               <p>Les messages de contact apparaîtront ici</p>
             </div>
           ) : (
@@ -255,7 +266,7 @@ export default function ContactMessagesManager() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ scale: 1.02 }}
-                className={`p-5 rounded-xl border cursor-pointer transition-all ${
+                className={`p-5 rounded-xl border cursor-pointer transition-all duration-200 ${
                   message.status === 'new'
                     ? 'bg-red-900/20 border-red-500/30 hover:bg-red-900/30'
                     : 'bg-gray-900/70 border-gray-800/50 hover:border-gray-600/50'
@@ -267,16 +278,16 @@ export default function ContactMessagesManager() {
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
                       {getStatusBadge(message.status)}
                       <h4 className="font-semibold text-white truncate">{message.subject}</h4>
                     </div>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-sm truncate">
                       De : <span className="text-white">{message.name}</span> • {message.email}
                     </p>
                   </div>
 
-                  <div className="text-right text-sm text-gray-500">
+                  <div className="text-right text-sm text-gray-500 whitespace-nowrap">
                     {new Date(message.created_at).toLocaleDateString('fr-FR', {
                       day: '2-digit',
                       month: 'short',
