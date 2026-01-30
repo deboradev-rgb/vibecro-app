@@ -176,7 +176,7 @@ export default function ProjectsManager({ onProjectAdded }: ProjectsManagerProps
       title: project.title,
       technologies: project.technologies || '',
       image: null,
-      lien: project.lien || '',
+      lien: project.lien ||'',
       status: project.status,
       description: project.description || '',
     });
