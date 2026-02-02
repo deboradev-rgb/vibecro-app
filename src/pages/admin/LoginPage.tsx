@@ -1,7 +1,6 @@
-// src/pages/admin/LoginPage.tsx
-import React from 'react';
+import  'react';
 import { motion } from 'framer-motion';
-import LoginForm from '../../components/admin/LoginForm';
+import {LoginForm} from '../../components/admin/LoginForm';
 import { Shield, Lock } from 'lucide-react';
 
 export default function LoginPage() {

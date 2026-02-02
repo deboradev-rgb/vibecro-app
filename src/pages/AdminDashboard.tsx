@@ -11,9 +11,10 @@ import Logo from '@/public/Logo.png';
 import {
   LogOut, Briefcase, Users, MessageSquare, Home, BarChart3, Settings,
   Bell, ChevronRight, ChevronLeft, Zap, Activity, Clock,
-  Target, Plus, PieChart, Download, Save, X, Menu, Check, ExternalLink, Search,
-  Pencil, Trash2, Calendar,
+  Target, Plus,  Download, Save, X, Menu, Check, ExternalLink, Search,
+  Pencil, Trash2, Calendar, Globe
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type Tab = 'dashboard' | 'projects' | 'team' | 'messages' | 'analytics' | 'settings';
 
@@ -75,6 +76,50 @@ export default function AdminDashboard() {
   const [editForm, setEditForm] = useState<Partial<ProjectInProgress>>({});
 
   const [activities, setActivities] = useState<ActivityItem[]>([]);
+
+  const { t, i18n } = useTranslation();
+
+  // ────────────────────────────────────────────────
+  // AJOUTS MINIMAUX POUR QUE SETTINGS FONCTIONNE
+  // ────────────────────────────────────────────────
+
+  const [preferences, setPreferences] = useState(() => {
+    const saved = localStorage.getItem('adminPreferences');
+    return saved
+      ? JSON.parse(saved)
+      : {
+          darkMode: true,
+          emailNotifications: true,
+          pushNotifications: true,
+          preferredLanguage: 'fr',
+        };
+  });
+
+  const savePreferences = (updates: Partial<typeof preferences>) => {
+    setPreferences(prev => {
+      const newPrefs = { ...prev, ...updates };
+      localStorage.setItem('adminPreferences', JSON.stringify(newPrefs));
+      return newPrefs;
+    });
+  };
+
+  // Appliquer le dark mode
+  useEffect(() => {
+    if (preferences.darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [preferences.darkMode]);
+
+  // Appliquer la langue sélectionnée
+  useEffect(() => {
+    i18n.changeLanguage(preferences.preferredLanguage);
+  }, [preferences.preferredLanguage, i18n]);
+
+  // ────────────────────────────────────────────────
+  // FIN DES AJOUTS – le reste est inchangé
+  // ────────────────────────────────────────────────
 
   // Fonction enrichie pour ajouter une activité avec plus de détails
   const addActivity = (action: string, icon: React.ReactNode, type?: ActivityItem['type'], color?: string) => {
@@ -139,9 +184,6 @@ export default function AdminDashboard() {
     addActivity('nouveau message reçu', <MessageSquare className="w-5 h-5" />, 'message', 'text-violet-400');
     loadDashboardData();
   };
-
-  // Exemple : si tu ajoutes la suppression ou modification ailleurs, tu peux appeler :
-  // addActivity('a supprimé le projet "Mon Site"', <Trash2 className="w-5 h-5" />, 'delete', 'text-rose-400');
 
   const stats: StatCard[] = [
     { label: 'Projets actifs', value: counters.projects, icon: <Activity className="w-7 h-7" />, color: 'from-blue-600 to-blue-500' },
@@ -472,7 +514,7 @@ export default function AdminDashboard() {
 
             <div className="bg-slate-800/60 rounded-2xl p-6 border border-slate-700">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
-                <Sun className="w-6 h-6 text-amber-400" /> Thème
+                <Zap className="w-6 h-6 text-amber-400" /> Thème
               </h3>
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Mode sombre</span>
@@ -523,11 +565,15 @@ export default function AdminDashboard() {
 
             <div className="bg-slate-800/60 rounded-2xl p-6 border border-slate-700">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-3">
-                <Languages className="w-6 h-6 text-amber-400" /> Langue préférée
+                <Globe className="w-6 h-6 text-amber-400" /> Langue préférée
               </h3>
               <select
                 value={preferences.preferredLanguage}
-                onChange={(e) => savePreferences({ preferredLanguage: e.target.value })}
+                onChange={(e) => {
+                  const newLang = e.target.value;
+                  savePreferences({ preferredLanguage: newLang });
+                  i18n.changeLanguage(newLang); // ← changement réel de langue
+                }}
                 className="w-full bg-slate-700 border border-slate-600 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-amber-500"
               >
                 <option value="fr">Français</option>
@@ -536,7 +582,13 @@ export default function AdminDashboard() {
             </div>
 
             <div className="text-center pt-8">
-              <Button className="px-10 py-4 text-lg font-medium gap-3">
+              <Button className="px-10 py-4 text-lg font-medium gap-3"
+                onClick={() => {
+                  console.log("Sauvegarde finale :", preferences);
+                  // Ici : appel API + toast de succès si tu veux
+                  // ex: await api.patch('/user/preferences', preferences);
+                }}
+              >
                 <Save size={20} /> Enregistrer les modifications
               </Button>
             </div>

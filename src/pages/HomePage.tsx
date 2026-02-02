@@ -244,22 +244,54 @@ export default function HomePage() {
                 transition={{ duration: 1.2, ease: "easeOut" }}
                 className="relative"
               >
-                <motion.div animate={{ y: [-15, 8, -15] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} className="relative mx-auto lg:mx-0 max-w-sm">
-                  <div className="relative z-10 bg-gradient-to-br from-[#e38f00] to-[#d48500] rounded-3xl p-6 shadow-2xl">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                      <div className="text-white text-center space-y-6">
-                        <div className="w-20 h-20 mx-auto bg-white/20 rounded-2xl flex items-center justify-center">
-                          <Sparkles className="w-12 h-12 animate-spin-slow" />
-                        </div>
-                        <h3 className="text-2xl font-bold">VIBECRO</h3>
-                        <p className="text-white/80">Innovation & Excellence Digitale</p>
-                      </div>
-                    </div>
-                  </div>
+               {/* Hero Visual – version centrée + symétrique + plus premium */}
+<motion.div
+  initial={{ opacity: 0, scale: 0.92, y: 40 }}
+  animate={{ opacity: 1, scale: 1, y: 0 }}
+  transition={{ duration: 1.1, ease: "easeOut" }}
+  className="relative flex justify-center lg:justify-end w-full"
+>
 
-                  <motion.div animate={{ y: [0, -15, 0], rotate: [0, 360] }} transition={{ duration: 10, repeat: Infinity }} className="absolute -top-8 -left-8 w-20 h-20 bg-[#e38f00]/20 rounded-full blur-xl" />
-                  <motion.div animate={{ y: [0, 15, 0], scale: [1, 1.3, 1] }} transition={{ duration: 5, repeat: Infinity }} className="absolute -bottom-10 -right-10 w-24 h-24 bg-[#d48500]/20 rounded-full blur-xl" />
-                </motion.div>
+  {/* Conteneur qui contrôle la taille ET l'alignement */}
+  <div className="relative w-full max-w-md lg:max-w-lg xl:max-w-xl">
+
+    {/* Carte principale */}
+    <motion.div
+      animate={{ y: [-12, 10, -12] }}
+      transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+      className="relative mx-auto"
+    >
+      <div className="relative z-10 bg-gradient-to-br from-[#e38f00] via-[#d48500] to-[#c67b00] rounded-3xl p-7 shadow-2xl shadow-[#e38f00]/25">
+        <div className="bg-white/12 backdrop-blur-md rounded-2xl p-7 border border-white/10">
+          <div className="text-white text-center space-y-7">
+            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-white/25 to-white/10 rounded-2xl flex items-center justify-center shadow-inner">
+              <Sparkles className="w-14 h-14 animate-spin-slow text-white drop-shadow-lg" />
+            </div>
+            <h3 className="text-3xl font-extrabold tracking-tight">VIBECRO</h3>
+            <p className="text-white/90 text-lg font-medium tracking-wide">
+              Innovation & Excellence Digitale
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Orbes plus discrets et symétriques */}
+      <motion.div
+        animate={{ y: [0, -20, 0], rotate: [0, 380] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -top-12 -left-10 w-28 h-28 bg-[#e38f00]/30 rounded-full blur-2xl"
+      />
+      <motion.div
+        animate={{ y: [0, 24, 0], scale: [1, 1.35, 1] }}
+        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute -bottom-14 -right-12 w-32 h-32 bg-[#d48500]/25 rounded-full blur-2xl"
+      />
+    </motion.div>
+
+    {/* Petit effet décoratif subtil en plus (optionnel) */}
+    <div className="absolute inset-0 bg-gradient-to-br from-[#e38f00]/5 via-transparent to-[#d48500]/5 rounded-3xl blur-3xl -z-10 scale-110" />
+  </div>
+</motion.div>
               </motion.div>
             </div>
           </div>

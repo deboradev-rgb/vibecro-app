@@ -82,7 +82,7 @@ export default function Footer() {
                 { label: 'Développement Web', to: '/services' },
                 { label: 'Solutions IoT', to: '/services' },
                 { label: 'Intelligence Artificielle', to: '/services' },
-                { label: 'Consulting', to: '/services' }
+                { label: 'Consonsulation', to: '/services' }
               ].map((item, index) => (
                 <motion.li
                   key={index}
@@ -211,7 +211,7 @@ export default function Footer() {
           >
             {[
               { label: 'Politique de confidentialité', to: '/legal/privacy' },
-              { label: 'Conditions d\'utilisation', to: '/legal/terms' },
+              { label: 'Mention Legal', to: '/legal/terms' },
               { label: 'Gestion des cookies', to: '/legal/cookies' }
             ].map((item, index) => (
               <motion.div

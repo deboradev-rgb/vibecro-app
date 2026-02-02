@@ -429,7 +429,7 @@ export default function PortfolioPage() {
       >
         <div className="w-4/5 mx-auto">
           <h2 className="text-5xl font-black text-center text-gray-900 dark:text-white mb-16">
-            Nos Réalisations
+            Nos Résultats
           </h2>
 
           <div className="grid md:grid-cols-4 gap-8">

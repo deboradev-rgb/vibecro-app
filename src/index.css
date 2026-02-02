@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --color-primary: #e38f00;
@@ -11,7 +15,7 @@
     --primary-300: #ffc688;
     --primary-400: #ffb366;
     --primary-500: #e38f00;
-    --primary-600: #cc8100;
+    --primary-600: #cc8100;0
     --primary-700: #b37200;
     --primary-800: #9a6300;
     --primary-900: #805400;
