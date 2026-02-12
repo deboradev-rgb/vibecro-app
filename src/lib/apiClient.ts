@@ -4,7 +4,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResp
 // ========================================================================
 // CONFIGURATION
 // ========================================================================
-const API_URL = import.meta.env.VITE_API_URL || 'http://newvibecroapi.vibecro.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://newvibecroapi.vibecro.com/api';
 
 // ========================================================================
 // TYPES & INTERFACES
