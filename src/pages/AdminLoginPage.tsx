@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
+import { Eye, EyeOff, Lock, Mail, Loader2 } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -18,75 +19,139 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
+      const success = await login(email.trim(), password);
       if (success) {
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard', { replace: true });
       } else {
-        setError('Email ou mot de passe invalide');
+        setError('Identifiants incorrects');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de la connexion');
+      setError(err.response?.data?.message || 'Erreur de connexion');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <div className="p-8">
-          <h1 className="text-3xl font-bold text-center mb-2">Vibecro Admin</h1>
-          <p className="text-center text-slate-600 mb-8">Connectez-vous à votre tableau de bord</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center p-4">
+      {/* Fond subtil avec effet grain */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(59,130,246,0.08),transparent_50%)]" />
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
+      <div className="relative w-full max-w-md">
+        {/* Effet de glow autour de la carte */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 rounded-2xl blur-xl opacity-70" />
+
+        <div className="relative bg-gray-900/80 backdrop-blur-xl border border-gray-800/50 rounded-2xl shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="px-8 pt-10 pb-6 text-center border-b border-gray-800/50">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 mb-4 shadow-lg">
+              <Lock className="w-8 h-8 text-white" />
             </div>
-          )}
+            <h1 className="text-3xl font-bold text-white mb-2">Espace Administration</h1>
+            <p className="text-gray-400 text-sm">Connectez-vous pour accéder au tableau de bord</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Email
+          {/* Formulaire */}
+          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            {error && (
+              <div className="p-4 bg-red-950/60 border border-red-800/50 text-red-300 rounded-xl text-sm flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-red-600/30 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold">!</span>
+                </div>
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Champ Email */}
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                Adresse email
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="votre@email.com"
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-500" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3.5 bg-gray-950/70 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all duration-200"
+                  placeholder="admin@vibecro.com"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+            {/* Champ Mot de passe */}
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                 Mot de passe
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-500" />
+                </div>
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-11 pr-12 py-3.5 bg-gray-950/70 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all duration-200"
+                  placeholder="••••••••••••"
+                  required
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-200 transition-colors"
+                  disabled={isLoading}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
 
-            <Button
+            {/* Bouton de connexion */}
+            <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className={`
+                w-full py-3.5 px-6 rounded-xl font-medium text-white
+                bg-gradient-to-r from-blue-600 to-indigo-600
+                hover:from-blue-700 hover:to-indigo-700
+                focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-gray-900
+                transition-all duration-300 shadow-lg
+                disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none
+                flex items-center justify-center gap-2
+              `}
             >
-              {isLoading ? 'Connexion...' : 'Se connecter'}
-            </Button>
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Connexion en cours...
+                </>
+              ) : (
+                'Se connecter'
+              )}
+            </button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-slate-600">
-            Pas encore de compte? Veuillez contacter l'administrateur
-          </p>
+          {/* Footer */}
+          <div className="px-8 pb-8 pt-4 text-center text-sm text-gray-500 border-t border-gray-800/50">
+            Contactez l’administrateur système pour obtenir vos identifiants
+          </div>
         </div>
-      </Card>
+
+        {/* Petit texte discret en bas */}
+        <p className="text-center text-xs text-gray-600 mt-6">
+          © {new Date().getFullYear()} Vibecro • Tous droits réservés
+        </p>
+      </div>
     </div>
   );
 }

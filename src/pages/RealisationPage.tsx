@@ -13,12 +13,9 @@ interface Project {
   image_url?: string | null
   link?: string | null
   status?: 'en_cours' | 'realise'
-  category?: 'mobile' | 'web' | 'desktop' | 'iot' | 'other'
+  category?: 'mobile' | 'web' 
   category_text?: string
   category_class?: string
-  category_icon?: string
-  status_text?: string
-  status_class?: string
   description?: string
   progress?: number
   start_date?: string
@@ -39,11 +36,6 @@ interface ProjectStats {
     en_cours: number
     realise: number
   }
-  other: {
-    total: number
-    en_cours: number
-    realise: number
-  }
 }
 
 export default function RealisationPage() {
@@ -58,7 +50,14 @@ export default function RealisationPage() {
     { id: 'all', label: 'Tous les projets', icon: '📊', color: 'bg-gray-500' },
     { id: 'mobile', label: 'Applications mobiles', icon: '📱', color: 'bg-blue-500' },
     { id: 'web', label: 'Applications web', icon: '🌐', color: 'bg-purple-500' },
-    ]
+  ]
+
+  const getCategoryIcon = (category: string) => {
+    switch(category) {
+      case 'mobile': return '📱'
+      case 'web': return '🌐'
+    }
+  }
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -360,6 +359,11 @@ export default function RealisationPage() {
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}
               `}
             >
+              <span className="text-lg">{filter.icon}</span>
+              <span className="whitespace-nowrap">{filter.label.split(' ')[0]}</span>
+              {filter.label.includes(' ') && (
+                <span className="hidden lg:inline">{filter.label.split(' ').slice(1).join(' ')}</span>
+              )}
             </button>
           ))}
         </div>
@@ -398,6 +402,8 @@ export default function RealisationPage() {
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'}
                     `}
                   >
+                    <span className="text-2xl">{filter.icon}</span>
+                    <span className="text-xs font-medium mt-1">{filter.label}</span>
                   </button>
                 ))}
               </div>
@@ -464,68 +470,7 @@ export default function RealisationPage() {
           </div>
         ) : (
           <>
-            {/* Barre de statistiques */}
-            <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      <span className="font-bold text-2xl">{stats?.mobile.total || 0}</span>
-                    </div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Applications mobiles</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-green-600 dark:text-green-400 font-semibold">
-                      {stats?.mobile.realise || 0} réalisés
-                    </div>
-                    <div className="text-yellow-600 dark:text-yellow-400 text-sm">
-                      {stats?.mobile.en_cours || 0} en cours
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Globe className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                      <span className="font-bold text-2xl">{stats?.web.total || 0}</span>
-                    </div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Applications web</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-green-600 dark:text-green-400 font-semibold">
-                      {stats?.web.realise || 0} réalisés
-                    </div>
-                    <div className="text-yellow-600 dark:text-yellow-400 text-sm">
-                      {stats?.web.en_cours || 0} en cours
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Cpu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      <span className="font-bold text-2xl">{stats?.other.total || 0}</span>
-                    </div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Autres projets</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-green-600 dark:text-green-400 font-semibold">
-                      {stats?.other.realise || 0} réalisés
-                    </div>
-                    <div className="text-yellow-600 dark:text-yellow-400 text-sm">
-                      {stats?.other.en_cours || 0} en cours
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+           
 
             {/* Grille des projets */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -541,7 +486,10 @@ export default function RealisationPage() {
                   {/* En-tête avec catégorie et statut */}
                   <div className="p-4 border-b border-gray-100 dark:border-white/10">
                     <div className="flex justify-between items-center">
-                     
+                      <div className={`px-3 py-1 rounded-full text-xs font-medium ${project.category_class || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}`}>
+                        <span className="mr-1">{getCategoryIcon(project.category || 'other')}</span>
+                        {project.category_text || 'Non catégorisé'}
+                      </div>
                       <div className={`px-3 py-1 rounded-full text-xs font-medium ${project.status_class || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}`}>
                         {project.status === 'realise' ? '✅ Réalisé' : '🔄 En cours'}
                       </div>

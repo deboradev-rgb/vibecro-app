@@ -228,21 +228,25 @@ export default function BlogPage() {
                       whileHover={{ y: -5 }}
                       className="group bg-white dark:bg-black/30 rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-300 border border-slate-200/50 dark:border-white/10 flex flex-col h-full"
                     >
-                      {post.featured_image ? (
-                        <div className="relative overflow-hidden aspect-[4/3]">
-                          <img
-                            src={post.featured_image}
-                            alt={post.title}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                        </div>
-                      ) : (
-                        <div className="relative overflow-hidden aspect-[4/3] bg-gradient-to-br from-[#e38f00]/10 to-[#d48500]/10 dark:from-[#f44d0b]/10 dark:to-[#e3440a]/10 flex items-center justify-center">
-                          <BookOpen className="w-16 h-16 text-[#e38f00]/30 dark:text-[#f44d0b]/30" />
-                        </div>
-                      )}
+                     {post.featured_image ? (
+  <div className="relative overflow-hidden aspect-[4/3]">
+    <img
+      src={`${import.meta.env.VITE_API_URL || 'https://newvibecroapi.vibecro.com'}/${post.featured_image.replace(/^\/?(public\/|storage\/)?/, 'storage/')}`}
+      alt={post.title}
+      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+      loading="lazy"
+      onError={(e) => {
+        console.log("❌ Échec chargement image :", post.featured_image);
+        e.currentTarget.src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop"; // image de secours
+      }}
+    />
+    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+  </div>
+) : (
+  <div className="relative overflow-hidden aspect-[4/3] bg-gradient-to-br from-[#e38f00]/10 to-[#d48500]/10 dark:from-[#f44d0b]/10 dark:to-[#e3440a]/10 flex items-center justify-center">
+    <BookOpen className="w-16 h-16 text-[#e38f00]/30 dark:text-[#f44d0b]/30" />
+  </div>
+)}
 
                       <div className="p-8 flex flex-col flex-grow">
                         <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-5">
