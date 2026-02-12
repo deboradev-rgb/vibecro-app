@@ -58,23 +58,7 @@ export default function RealisationPage() {
     { id: 'all', label: 'Tous les projets', icon: '📊', color: 'bg-gray-500' },
     { id: 'mobile', label: 'Applications mobiles', icon: '📱', color: 'bg-blue-500' },
     { id: 'web', label: 'Applications web', icon: '🌐', color: 'bg-purple-500' },
-    { id: 'mobile_en_cours', label: 'Mobile en cours', icon: '📱', subIcon: '🔄', color: 'bg-blue-400' },
-    { id: 'mobile_realise', label: 'Mobile réalisé', icon: '📱', subIcon: '✅', color: 'bg-green-500' },
-    { id: 'web_en_cours', label: 'Web en cours', icon: '🌐', subIcon: '🔄', color: 'bg-purple-400' },
-    { id: 'web_realise', label: 'Web réalisé', icon: '🌐', subIcon: '✅', color: 'bg-green-500' },
-    { id: 'en_cours', label: 'Tous en cours', icon: '🔄', color: 'bg-yellow-500' },
-    { id: 'realise', label: 'Tous réalisés', icon: '✅', color: 'bg-green-600' },
-  ]
-
-  const getCategoryIcon = (category: string) => {
-    switch(category) {
-      case 'mobile': return '📱'
-      case 'web': return '🌐'
-      case 'desktop': return '💻'
-      case 'iot': return '🔗'
-      default: return '📌'
-    }
-  }
+    ]
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -133,12 +117,6 @@ export default function RealisationPage() {
     if (activeFilter === 'all') return true
     if (activeFilter === 'mobile') return project.category === 'mobile'
     if (activeFilter === 'web') return project.category === 'web'
-    if (activeFilter === 'en_cours') return project.status === 'en_cours'
-    if (activeFilter === 'realise') return project.status === 'realise'
-    if (activeFilter === 'mobile_en_cours') return project.category === 'mobile' && project.status === 'en_cours'
-    if (activeFilter === 'mobile_realise') return project.category === 'mobile' && project.status === 'realise'
-    if (activeFilter === 'web_en_cours') return project.category === 'web' && project.status === 'en_cours'
-    if (activeFilter === 'web_realise') return project.category === 'web' && project.status === 'realise'
     return true
   })
 
@@ -382,12 +360,6 @@ export default function RealisationPage() {
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}
               `}
             >
-              <span className="text-lg">{filter.icon}</span>
-              {filter.subIcon && <span className="text-sm">{filter.subIcon}</span>}
-              <span className="whitespace-nowrap">{filter.label.split(' ')[0]}</span>
-              {filter.label.includes(' ') && (
-                <span className="hidden lg:inline">{filter.label.split(' ').slice(1).join(' ')}</span>
-              )}
             </button>
           ))}
         </div>
@@ -426,9 +398,6 @@ export default function RealisationPage() {
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'}
                     `}
                   >
-                    <span className="text-2xl">{filter.icon}</span>
-                    {filter.subIcon && <span className="text-sm">{filter.subIcon}</span>}
-                    <span className="text-xs font-medium mt-1">{filter.label}</span>
                   </button>
                 ))}
               </div>
@@ -572,10 +541,7 @@ export default function RealisationPage() {
                   {/* En-tête avec catégorie et statut */}
                   <div className="p-4 border-b border-gray-100 dark:border-white/10">
                     <div className="flex justify-between items-center">
-                      <div className={`px-3 py-1 rounded-full text-xs font-medium ${project.category_class || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}`}>
-                        <span className="mr-1">{getCategoryIcon(project.category || 'other')}</span>
-                        {project.category_text || 'Non catégorisé'}
-                      </div>
+                     
                       <div className={`px-3 py-1 rounded-full text-xs font-medium ${project.status_class || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}`}>
                         {project.status === 'realise' ? '✅ Réalisé' : '🔄 En cours'}
                       </div>
