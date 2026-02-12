@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { teamAPI } from '@/lib/apiClient'
 import { Link } from 'react-router-dom'
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://newvibecroapi.vibecro.com/api'
+const API_URL = import.meta.env.VITE_API_URL || 'https://newvibecroapi.vibecro.com'
 
 interface TeamMember {
   id: number
@@ -54,7 +54,7 @@ export default function AboutPage() {
         members = members.map((m: TeamMember) => {
           let img = m.image_url || m.image || null
           if (img && !img.startsWith('http')) {
-            img = `${API_URL}/storage/app/${img.replace(/^public\//, '')}`
+            img = `https://newvibecroapi.vibecro.com/storage/app/public/${img}`
           }
           return { ...m, image_url: img }
         })
