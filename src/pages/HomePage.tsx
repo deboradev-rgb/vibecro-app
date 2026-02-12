@@ -5,7 +5,6 @@ import Image2 from '@/public/logoipsum2.png'
 import Image3 from '@/public/logoipsum3.png' 
 import Image5 from '@/public/logoipsum5.png' 
 import Image6 from '@/public/logoipsum6.png' 
-//import equipe from '@/public/equipe.jpg'
 import { 
   ArrowRight, 
   Sparkles, 
@@ -56,8 +55,6 @@ export default function HomePage() {
     { value: '30+', label: 'Experts Talents', icon: Users },
     { value: '6+', label: 'Années d\'Expérience', icon: Award }
   ]
-
-  const partnerLogos = [Image1, Image2, Image3, Image5, Image6];
 
   const services = [
     {
