@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, ExternalLink, Loader2, Image as ImageIcon } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://newvibecroapi.vibecro.com/api';
 
 interface Project {
   id: number;

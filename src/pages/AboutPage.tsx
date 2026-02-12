@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { teamAPI } from '@/lib/apiClient'
 import { Link } from 'react-router-dom'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_URL = import.meta.env.VITE_API_URL || 'https://newvibecroapi.vibecro.com/api'
 
 interface TeamMember {
   id: number
