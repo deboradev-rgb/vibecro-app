@@ -54,7 +54,7 @@ export default function AboutPage() {
         members = members.map((m: TeamMember) => {
           let img = m.image_url || m.image || null
           if (img && !img.startsWith('http')) {
-            img = `${API_URL}/storage/${img.replace(/^public\//, '')}`
+            img = `${API_URL}/storage/app/${img.replace(/^public\//, '')}`
           }
           return { ...m, image_url: img }
         })
