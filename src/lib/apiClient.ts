@@ -37,7 +37,7 @@ const PUBLIC_ROUTES = {
     '/team-members',
     '/team-members/',
     '/storage',
-    '/storage/app/public',
+    '/storage/',
     '/test',
     '/health',
   ],
