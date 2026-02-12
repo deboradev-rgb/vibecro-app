@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import HomePage from '@/pages/HomePage';
 import AboutPage from '@/pages/AboutPage';
+import BlogPage from '@/pages/BlogPage';
 import ContactPage from '@/pages/ContactPage';
 import ServicesPage from '@/pages/ServicesPage';
 import IoTTrackingPage from '@/pages/IoTTrackingPage';
@@ -13,14 +14,17 @@ import RHIASolutionsPage from '@/pages/RHIASolutionsPage';
 import DeveloppementWebPage from '@/pages/DeveloppementWebPage';
 import ClientelePlusPage from '@/pages/ClientelePlusPage';
 import ConciergerieTouristiquePage from '@/pages/ConciergerieTouristiquePage';
-import PortfolioPage from '@/pages/PortfolioPage';
+import PortfolioPage from '@/pages/RealisationPage';
 import PrivacyPage from '@/pages/legal/PrivacyPage';
 import TermsPage from '@/pages/legal/TermsPage';
 import CookiesPage from '@/pages/legal/CookiesPage';
 import AdminLoginPage from '@/pages/AdminLoginPage';
 import AdminDashboard from '@/pages/AdminDashboard';
+import AllProjects from './pages/AllProjects';
 import './App.css';
 import './styles/dashboard.css';
+import BlogDetailPage from './pages/BlogDetailPage';
+
 
 function AppContent() {
   const location = useLocation();
@@ -35,13 +39,18 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+          
+          <Route path="/blog/:slug" element={<BlogDetailPage />} />
+
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/services/iot-tracking" element={<IoTTrackingPage />} />
           <Route path="/services/rh-ia-solutions" element={<RHIASolutionsPage />} />
           <Route path="/services/developpement-web" element={<DeveloppementWebPage />} />
           <Route path="/services/clientele-plus" element={<ClientelePlusPage />} />
           <Route path="/services/conciergerie-touristique" element={<ConciergerieTouristiquePage />} />
-          <Route path="/portfolio" element={<PortfolioPage />} />
+          <Route path="/realisation" element={<PortfolioPage />} />
+          <Route path="/projects" element={<AllProjects />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/legal/privacy" element={<PrivacyPage />} />
           <Route path="/legal/terms" element={<TermsPage />} />

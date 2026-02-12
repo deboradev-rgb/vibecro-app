@@ -1,8 +1,10 @@
 // src/pages/ContactPage.tsx
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Navigation, X, Edit3, Check, ChevronDown, Heart, CheckCircle as CheckCircleIcon } from 'lucide-react'
+import { Mail, Phone, MapPin, Send, MessageSquare, Clock, Navigation, X, Edit3, Check, ChevronDown, CheckCircle as CheckCircleIcon, Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { contactAPI } from '@/lib/apiClient'
+import axios from 'axios'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -13,103 +15,35 @@ export default function ContactPage() {
     message: ''
   })
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false)
+  const [privacyError, setPrivacyError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const [activeField, setActiveField] = useState<string | null>(null)
   const [tempValue, setTempValue] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
-  const [successMessage, setSuccessMessage] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
 
+  // Images du carrousel
   const heroImages = [
-    { icon: Phone, label: 'Appel', color: '#e38f00' },
-    { icon: Mail, label: 'Email', color: '#e38f00' },
-    { icon: MessageSquare, label: 'Chat', color: '#e38f00' },
-    { icon: Heart, label: 'Support', color: '#e38f00' }
+    {
+      url: "https://images.unsplash.com/photo-1580894894513-541e068a3e2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
+      alt: "Contact professionnel"
+    },
+    {
+      url: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
+      alt: "Équipe en réunion"
+    }
   ]
 
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveImageIndex((prev) => (prev + 1) % heroImages.length)
-    }, 4000)
+    }, 5000)
     return () => clearInterval(interval)
   }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Validation des champs requis
-    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-      setErrorMessage('Veuillez remplir tous les champs obligatoires')
-      setTimeout(() => setErrorMessage(''), 5000)
-      return
-    }
-
-    setIsLoading(true)
-    setErrorMessage('')
-    setSuccessMessage('')
-
-    try {
-      // Préparer les données à envoyer
-      const contactData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone || null,
-        subject: formData.subject || 'Demande de contact',
-        message: formData.message,
-        status: 'new', // Statut par défaut
-        ip_address: '', // L'adresse IP sera récupérée côté serveur
-        read: false // Non lu par défaut
-      }
-
-      // Envoyer à l'API
-      const response = await contactAPI.create(contactData)
-      
-      if (response.status === 201 || response.status === 200) {
-        setSuccessMessage('Message envoyé avec succès ! Nous vous recontacterons dans les plus brefs délais.')
-        
-        // Réinitialiser le formulaire
-        setFormData({ 
-          name: '', 
-          email: '', 
-          phone: '', 
-          subject: '', 
-          message: '' 
-        })
-        
-        // Supprimer le message de succès après 5 secondes
-        setTimeout(() => setSuccessMessage(''), 5000)
-      } else {
-        throw new Error('Erreur lors de l\'envoi du message')
-      }
-    } catch (error: any) {
-      console.error('Erreur lors de l\'envoi du message:', error)
-      
-      // Gérer les différentes erreurs
-      if (error.response?.status === 422) {
-        // Erreur de validation Laravel
-        const validationErrors = error.response.data.errors
-        let errorMsg = 'Erreurs de validation:\n'
-        
-        for (const field in validationErrors) {
-          errorMsg += `• ${field}: ${validationErrors[field].join(', ')}\n`
-        }
-        
-        setErrorMessage(errorMsg)
-      } else if (error.response?.status === 401) {
-        setErrorMessage('Vous devez être connecté pour envoyer un message')
-      } else if (error.message?.includes('Network Error')) {
-        setErrorMessage('Erreur de connexion au serveur. Vérifiez votre connexion internet.')
-      } else {
-        setErrorMessage('Erreur lors de l\'envoi du message. Veuillez réessayer plus tard.')
-      }
-      
-      // Supprimer le message d'erreur après 5 secondes
-      setTimeout(() => setErrorMessage(''), 5000)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const openFieldEditor = (fieldKey: string, currentValue: string = '') => {
     setActiveField(fieldKey)
@@ -129,6 +63,105 @@ export default function ContactPage() {
     setActiveField(null)
   }
 
+  // ✅ FONCTION CORRIGÉE : Envoi vers l'API Laravel avec disparition auto du message
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  
+  // Validation des champs obligatoires
+  if (!formData.name.trim()) {
+    setErrorMessage('Veuillez entrer votre nom')
+    setTimeout(() => setErrorMessage(''), 5000)
+    return
+  }
+
+  if (!formData.email.trim()) {
+    setErrorMessage('Veuillez entrer votre email')
+    setTimeout(() => setErrorMessage(''), 5000)
+    return
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.email)) {
+    setErrorMessage('Veuillez entrer un email valide')
+    setTimeout(() => setErrorMessage(''), 5000)
+    return
+  }
+
+  if (!formData.message.trim()) {
+    setErrorMessage('Veuillez entrer votre message')
+    setTimeout(() => setErrorMessage(''), 5000)
+    return
+  }
+
+  if (!acceptPrivacy) {
+    setPrivacyError(true)
+    setTimeout(() => setPrivacyError(false), 5000)
+    return
+  }
+
+  try {
+    setIsSubmitting(true)
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    console.log('📤 Envoi du message:', formData)
+
+    // ✅ Envoi vers l'API Laravel
+    const response = await axios.post(`${API_URL}/contact-messages`, {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone?.trim() || null,
+      subject: formData.subject?.trim() || 'Demande de contact',
+      message: formData.message.trim(),
+      status: 'new'
+    })
+
+    console.log('✅ Message envoyé avec succès:', response.data)
+
+    // ✅ Message de succès
+    setSuccessMessage('✅ Votre message a été envoyé avec succès ! Notre équipe vous répondra dans les plus brefs délais.')
+    
+    // ✅ DISPARITION AUTOMATIQUE APRÈS 5 SECONDES
+    setTimeout(() => setSuccessMessage(''), 5000)
+
+    // Réinitialiser le formulaire
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      subject: '',
+      message: ''
+    })
+    setAcceptPrivacy(false)
+
+  } catch (error: any) {
+    console.error('❌ Erreur envoi message:', error)
+    
+    // Gestion des erreurs
+    if (error.response) {
+      if (error.response.status === 422) {
+        const errors = error.response.data.errors
+        const errorMessages = Object.values(errors).flat()
+        setErrorMessage(errorMessages.join(', '))
+      } else if (error.response.status === 429) {
+        setErrorMessage('Trop de tentatives. Veuillez patienter quelques instants.')
+      } else {
+        setErrorMessage(error.response.data.message || 'Erreur lors de l\'envoi du message')
+      }
+    } else if (error.request) {
+      setErrorMessage('Impossible de contacter le serveur. Vérifiez votre connexion.')
+    } else {
+      setErrorMessage('Une erreur est survenue. Veuillez réessayer.')
+    }
+    
+    // ✅ Disparition auto du message d'erreur
+    setTimeout(() => setErrorMessage(''), 5000)
+    
+  } finally {
+    setIsSubmitting(false)
+  }
+}
+
   const subjects = [
     "Demande d'information",
     "Demande de devis",
@@ -141,7 +174,7 @@ export default function ContactPage() {
   const fields = [
     { key: 'name', label: 'Nom complet *', placeholder: 'Votre nom', type: 'text', required: true },
     { key: 'email', label: 'Email *', placeholder: 'votre.email@exemple.com', type: 'email', required: true },
-    { key: 'phone', label: 'Téléphone', placeholder: '+213 6 00 00 00 00', type: 'tel', required: false },
+    { key: 'phone', label: 'Téléphone', placeholder: '+229 XX XX XX XX', type: 'tel', required: false },
     { key: 'message', label: 'Votre message *', placeholder: 'Écrivez votre message...', isTextarea: true, required: true }
   ]
 
@@ -149,26 +182,26 @@ export default function ContactPage() {
     {
       icon: Phone,
       title: 'Téléphone',
-      info: '05 59 58 43 83',
-      subtext: '24/7 Disponible'
+      info: '+229 01 40 96 33 33\n+229 01 21 31 54 64',
+      subtext: 'Disponible 24/7'
     },
     {
       icon: Mail,
       title: 'Email',
-      info: 'tawssilgo@gmail.com',
+      info: 'groupe-vibecro@outlook.fr',
       subtext: 'Réponse sous 1h'
     },
     {
       icon: MapPin,
       title: 'Adresse',
-      info: 'Constantine, Algérie',
+      info: 'Abomey-Calavi\nDerrière le CEG Godomey',
       subtext: 'Visite sur rendez-vous'
     }
   ]
 
   return (
     <>
-      <div className="relative min-h-screen w-full bg-gradient-to-b from-white via-white to-slate-50 dark:from-black dark:via-black dark:to-black ">
+      <div className="relative min-h-screen w-full bg-gradient-to-b from-white via-white to-slate-50 dark:from-black dark:via-black dark:to-black">
         
         {/* Messages d'alerte */}
         <AnimatePresence>
@@ -182,9 +215,7 @@ export default function ContactPage() {
               <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg shadow-lg">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
+                    <CheckCircleIcon className="h-5 w-5 text-green-400" />
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-green-700">{successMessage}</p>
@@ -204,9 +235,7 @@ export default function ContactPage() {
               <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-lg">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
+                    <X className="h-5 w-5 text-red-400" />
                   </div>
                   <div className="ml-3 flex-1">
                     <p className="text-sm text-red-700 whitespace-pre-line">{errorMessage}</p>
@@ -233,22 +262,27 @@ export default function ContactPage() {
           <div className="w-4/5 mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               
-              {/* Left: Image Section */}
+              {/* Gauche : Carrousel */}
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8 }}
                 className="relative w-full h-96 lg:h-[500px] rounded-3xl overflow-hidden shadow-2xl group"
               >
-                <img
-                  src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
-                  alt="Personne dans une entreprise qui prend un appel téléphonique"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=2070&q=80';
-                  }}
-                />
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={activeImageIndex}
+                    initial={{ opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 1.2, ease: "easeInOut" }}
+                    src={heroImages[activeImageIndex].url}
+                    alt={heroImages[activeImageIndex].alt}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                </AnimatePresence>
 
+                {/* Overlay image locale */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -265,12 +299,14 @@ export default function ContactPage() {
                   />
                 </motion.div>
                 
+                {/* Overlay gradient */}
                 <motion.div
                   animate={{ opacity: [0.3, 0.5, 0.3] }}
                   transition={{ duration: 4, repeat: Infinity }}
                   className="absolute inset-0 bg-gradient-to-br from-[#e38f00]/40 via-transparent to-black/40 z-[2]"
                 />
                 
+                {/* Icônes flottantes */}
                 <motion.div
                   animate={{ y: [0, -30, 0] }}
                   transition={{ duration: 6, repeat: Infinity }}
@@ -288,7 +324,7 @@ export default function ContactPage() {
                 </motion.div>
               </motion.div>
 
-              {/* Right: Text Content */}
+              {/* Droite : Texte */}
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -352,7 +388,7 @@ export default function ContactPage() {
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                       {method.title}
                     </h3>
-                    <p className="text-lg font-semibold text-[#e38f00] dark:text-[#f44d0b] mb-2">
+                    <p className="text-lg font-semibold text-[#e38f00] dark:text-[#f44d0b] mb-2 whitespace-pre-line">
                       {method.info}
                     </p>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -390,7 +426,7 @@ export default function ContactPage() {
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                     className="relative z-0"
-                    title="Localisation Tawssil"
+                    title="Localisation VibeCro"
                   />
                   
                   <motion.div 
@@ -458,8 +494,8 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="font-bold text-lg mb-2">Notre siège</h4>
-                      <p className="text-white/90 text-sm mb-3">
-                        Abomey-Calavi <br />
+                      <p className="text-white/90 text-sm mb-3 whitespace-pre-line">
+                        Abomey-Calavi<br />
                         Derrière le CEG Godomey
                       </p>
                       <motion.a
@@ -500,7 +536,7 @@ export default function ContactPage() {
                 </motion.div>
               </motion.div>
 
-              {/* Formulaire Magique - Droite */}
+              {/* Formulaire - CORRIGÉ avec onSubmit API */}
               <motion.div
                 initial={{ opacity: 0, x: 60 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -512,7 +548,7 @@ export default function ContactPage() {
                     Envoyez-nous un Message
                   </h3>
                   <p className="text-slate-600 dark:text-slate-400 mt-3 text-sm">
-                    Cliquez sur chaque champ pour le remplir avec élégance
+                    Remplissez le formulaire ci-dessous
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                     Les champs marqués d'un * sont obligatoires
@@ -606,37 +642,63 @@ export default function ContactPage() {
                     </AnimatePresence>
                   </div>
 
-                  {/* Submit Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.95 }}
-                    type="submit"
-                    disabled={isLoading || !formData.name || !formData.email || !formData.message}
-                    className="w-full bg-gradient-to-r from-[#e38f00] to-[#d48500] dark:from-[#f44d0b] dark:to-[#e3440a] text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-3 relative overflow-hidden group"
-                  >
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100"
-                      initial={{ x: "-100%" }}
-                      whileHover={{ x: "100%" }}
-                      transition={{ duration: 0.6 }}
+                  {/* Acceptation confidentialité */}
+                  <div className="flex items-start gap-3 pt-4 pb-6 px-2">
+                    <input
+                      id="privacy-accept"
+                      type="checkbox"
+                      checked={acceptPrivacy}
+                      onChange={(e) => {
+                        setAcceptPrivacy(e.target.checked)
+                        if (e.target.checked) setPrivacyError(false)
+                      }}
+                      className="mt-1 h-5 w-5 rounded border-slate-300 text-[#e38f00] focus:ring-[#e38f00]/30 dark:border-slate-600 dark:bg-slate-800 cursor-pointer"
                     />
-                    {isLoading ? (
+                    <label 
+                      htmlFor="privacy-accept" 
+                      className="text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none leading-relaxed"
+                    >
+                      J'accepte que les informations saisies dans ce formulaire soient utilisées pour 
+                      <span className="text-[#e38f00] font-medium"> me recontacter</span> et 
+                      <span className="text-[#e38f00] font-medium"> traiter ma demande</span>.
+                      <span className="block mt-1 text-xs text-slate-500 dark:text-slate-500">
+                        Vos données sont traitées de manière confidentielle.
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Message d'erreur confidentialité */}
+                  <AnimatePresence>
+                    {privacyError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-red-50 border-l-4 border-red-500 p-3 rounded-lg text-sm text-red-700"
+                      >
+                        Vous devez accepter le traitement de vos données pour pouvoir envoyer le message.
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Bouton submit corrigé */}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-[#e38f00] to-[#d48500] dark:from-[#f44d0b] dark:to-[#e3440a] text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Envoi en cours...</span>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Envoi en cours...
                       </>
                     ) : (
                       <>
                         <span>Envoyer le message</span>
-                        <motion.div
-                          animate={{ x: [0, 5, 0] }}
-                          transition={{ duration: 1.5, repeat: Infinity }}
-                        >
-                          <Send className="w-5 h-5" />
-                        </motion.div>
+                        <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
-                  </motion.button>
+                  </button>
                 </form>
               </motion.div>
             </div>
@@ -686,16 +748,14 @@ export default function ContactPage() {
                 </div>
 
                 {fields.find(f => f.key === activeField)?.isTextarea ? (
-                  <div className="space-y-4">
-                    <textarea
-                      value={tempValue}
-                      onChange={e => setTempValue(e.target.value)}
-                      rows={6}
-                      className="w-full px-4 py-3 border-2 border-slate-300 dark:border-white/10 bg-white dark:bg-black/20 text-slate-900 dark:text-white rounded-xl focus:border-[#e38f00] focus:outline-none resize-none transition-colors"
-                      placeholder="Tapez votre message ici..."
-                      autoFocus
-                    />
-                  </div>
+                  <textarea
+                    value={tempValue}
+                    onChange={e => setTempValue(e.target.value)}
+                    rows={6}
+                    className="w-full px-4 py-3 border-2 border-slate-300 dark:border-white/10 bg-white dark:bg-black/20 text-slate-900 dark:text-white rounded-xl focus:border-[#e38f00] focus:outline-none resize-none transition-colors"
+                    placeholder="Tapez votre message ici..."
+                    autoFocus
+                  />
                 ) : (
                   <input
                     type={fields.find(f => f.key === activeField)?.type || 'text'}

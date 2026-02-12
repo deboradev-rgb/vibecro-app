@@ -1,3 +1,4 @@
+// src/components/admin/TeamManager.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { teamAPI } from '@/lib/apiClient';
 import { Upload, X, User, Loader2, Edit2, Trash2, CheckCircle } from 'lucide-react';
@@ -7,7 +8,8 @@ interface TeamMember {
   id: number;
   name: string;
   position: string;
-  image?: string;
+  image?: string;        // ⚠️ Chemin interne (ne pas utiliser pour affichage)
+  image_url?: string;    // ✅ URL publique à utiliser pour l'affichage
   email?: string;
   phone?: string;
   linkedin?: string;
@@ -15,7 +17,6 @@ interface TeamMember {
   twitter?: string;
 }
 
-// Ajout de la prop onMemberAdded pour notifier le dashboard parent
 interface TeamManagerProps {
   onMemberAdded?: () => void;
 }
@@ -51,10 +52,17 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
       setIsLoading(true);
       setError('');
       const response = await teamAPI.getAll();
-      setMembers(response.data);
+      
+      // Debug: voir ce que renvoie l'API
+      console.log('📥 Réponse API TeamMembers:', response.data);
+      
+      // La structure peut être response.data.data ou response.data
+      const membersData = response.data?.data || response.data || [];
+      setMembers(Array.isArray(membersData) ? membersData : []);
+      
     } catch (err: any) {
       setError('Erreur lors du chargement des membres');
-      console.error(err);
+      console.error('❌ Erreur fetchMembers:', err);
     } finally {
       setIsLoading(false);
     }
@@ -64,12 +72,14 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validation du type de fichier
     const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       setError('Format non supporté (JPEG, PNG, GIF, WebP)');
       return;
     }
 
+    // Validation de la taille (max 5 Mo)
     if (file.size > 5 * 1024 * 1024) {
       setError('Image trop volumineuse (max 5 Mo)');
       return;
@@ -78,6 +88,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
     setImageFile(file);
     setError('');
 
+    // Créer un aperçu local
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -103,34 +114,42 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
       setIsUploading(true);
 
       const formDataToSend = new FormData();
+      
+      // Ajouter tous les champs du formulaire
       Object.entries(formData).forEach(([key, value]) => {
         if (value) formDataToSend.append(key, value);
       });
-      if (imageFile) formDataToSend.append('image', imageFile);
+      
+      // Ajouter l'image si elle existe
+      if (imageFile) {
+        formDataToSend.append('image', imageFile);
+      }
 
-      let isNewMember = !editingId;
+      const isNewMember = !editingId;
 
       if (editingId) {
+        // Mode édition
         await teamAPI.update(editingId, formDataToSend);
         setSuccessMessage('Membre modifié avec succès !');
       } else {
+        // Mode création
         await teamAPI.create(formDataToSend);
         setSuccessMessage('Membre ajouté avec succès !');
-        
       }
 
-      // IMPORTANT : on notifie le dashboard parent qu'un membre a été ajouté/modifié
+      // Notifier le parent si nécessaire
       if (isNewMember && onMemberAdded) {
         onMemberAdded();
       }
 
-      await fetchMembers(); // Rafraîchit la liste
+      // Rafraîchir la liste
+      await fetchMembers();
       resetForm();
 
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Erreur lors de l\'enregistrement';
       setError(msg);
-      console.error(err);
+      console.error('❌ Erreur submit:', err);
     } finally {
       setIsUploading(false);
     }
@@ -145,7 +164,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
       await fetchMembers();
     } catch (err: any) {
       setError('Erreur lors de la suppression');
-      console.error(err);
+      console.error('❌ Erreur delete:', err);
     }
   };
 
@@ -159,8 +178,10 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
       github: member.github || '',
       twitter: member.twitter || '',
     });
-    setImagePreview(member.image || null);
-    setImageFile(null); // On ne précharge pas le fichier existant (sécurité)
+    
+    // ✅ Utiliser image_url pour l'aperçu (pas image)
+    setImagePreview(member.image_url || null);
+    setImageFile(null);
     setEditingId(member.id);
     setShowForm(true);
   };
@@ -200,7 +221,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
           className="p-4 bg-red-900/30 border border-red-500/50 rounded-xl text-red-300 flex items-center gap-3"
         >
           <X className="w-5 h-5 flex-shrink-0" />
-          {error}
+          <span>{error}</span>
         </motion.div>
       )}
 
@@ -211,7 +232,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
           className="p-4 bg-green-900/30 border border-green-500/50 rounded-xl text-green-300 flex items-center gap-3"
         >
           <CheckCircle className="w-5 h-5 flex-shrink-0" />
-          {successMessage}
+          <span>{successMessage}</span>
         </motion.div>
       )}
 
@@ -259,43 +280,62 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
                 Photo du membre
               </label>
               <div className="flex flex-col sm:flex-row items-start gap-6">
+                {/* Aperçu de l'image */}
                 <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden bg-gray-800 border border-gray-700">
                   {imagePreview ? (
                     <>
-                      <img src={imagePreview} alt="Aperçu" className="w-full h-full object-cover" />
+                      <img 
+                        src={imagePreview} 
+                        alt="Aperçu" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error('❌ Erreur chargement aperçu:', imagePreview);
+                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23374151\'/%3E%3Ctext x=\'50\' y=\'50\' font-size=\'14\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%239ca3af\'%3EErreur%3C/text%3E%3C/svg%3E';
+                        }}
+                      />
                       <button
                         type="button"
                         onClick={removeImage}
-                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1.5 hover:bg-red-700"
+                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1.5 hover:bg-red-700 transition-all"
                         disabled={isUploading}
                       >
                         <X size={16} />
                       </button>
                     </>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <User className="w-12 h-12 text-gray-500" />
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                      <User className="w-12 h-12 text-gray-500 mb-2" />
+                      <span className="text-xs text-gray-500">Aucune photo</span>
                     </div>
                   )}
                 </div>
 
+                {/* Bouton de sélection */}
                 <div className="flex-1">
                   <input
                     type="file"
                     ref={fileInputRef}
                     onChange={handleImageChange}
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
                     className="hidden"
+                    id="team-image-upload"
                   />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all disabled:opacity-50"
-                    disabled={isUploading}
+                  <label
+                    htmlFor="team-image-upload"
+                    className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                   >
                     <Upload size={18} />
-                    Choisir une photo
-                  </button>
+                    {imageFile ? 'Changer la photo' : 'Choisir une photo'}
+                  </label>
+                  
+                  {/* Nom du fichier sélectionné */}
+                  {imageFile && (
+                    <p className="text-sm text-green-400 mt-2 flex items-center gap-1">
+                      <CheckCircle size={14} />
+                      {imageFile.name}
+                    </p>
+                  )}
+                  
                   <p className="text-sm text-gray-500 mt-2">
                     JPG, PNG, GIF, WebP • Max 5 Mo
                   </p>
@@ -303,7 +343,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
               </div>
             </div>
 
-            {/* Champs texte */}
+            {/* Champs texte - 2 colonnes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -314,6 +354,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:border-[#e38f00] focus:ring-2 focus:ring-[#e38f00]/30 outline-none transition-all"
+                  placeholder="Ex: Jean Dupont"
                   required
                   disabled={isUploading}
                 />
@@ -328,6 +369,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
                   value={formData.position}
                   onChange={e => setFormData({ ...formData, position: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:border-[#e38f00] focus:ring-2 focus:ring-[#e38f00]/30 outline-none transition-all"
+                  placeholder="Ex: Développeur Full Stack"
                   required
                   disabled={isUploading}
                 />
@@ -340,6 +382,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:border-[#e38f00] focus:ring-2 focus:ring-[#e38f00]/30 outline-none transition-all"
+                  placeholder="jean@exemple.com"
                   disabled={isUploading}
                 />
               </div>
@@ -351,12 +394,13 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
                   value={formData.phone}
                   onChange={e => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:border-[#e38f00] focus:ring-2 focus:ring-[#e38f00]/30 outline-none transition-all"
+                  placeholder="+33 6 12 34 56 78"
                   disabled={isUploading}
                 />
               </div>
             </div>
 
-            {/* Réseaux sociaux */}
+            {/* Réseaux sociaux - 3 colonnes */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">LinkedIn</label>
@@ -383,7 +427,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Twitter/X</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Twitter / X</label>
                 <input
                   type="url"
                   value={formData.twitter}
@@ -396,7 +440,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
             </div>
 
             {/* Boutons d'action */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-end pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 justify-end pt-6 border-t border-gray-800">
               <button
                 type="button"
                 onClick={resetForm}
@@ -415,10 +459,10 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Enregistrement...
                   </>
-                ) : editingId ? (
-                  'Mettre à jour'
                 ) : (
-                  'Ajouter le membre'
+                  <>
+                    {editingId ? 'Mettre à jour' : 'Ajouter le membre'}
+                  </>
                 )}
               </button>
             </div>
@@ -426,7 +470,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
         </motion.div>
       )}
 
-      {/* Liste des membres */}
+      {/* Liste des membres - CORRIGÉ avec fallback sans placeholder externe */}
       {members.length > 0 && (
         <div>
           <h3 className="text-xl font-bold text-white mb-6">Membres de l'équipe</h3>
@@ -440,10 +484,33 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
               >
                 <div className="p-6">
                   <div className="flex items-center gap-4">
-                    {/* Photo */}
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-800 border-2 border-gray-700 flex-shrink-0">
-                      {member.image ? (
-                        <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                    {/* Photo - avec fallback intégré (pas de requête externe) */}
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-800 border-2 border-gray-700 flex-shrink-0">
+                      {member.image_url ? (
+                        <>
+                          <img 
+                            src={member.image_url} 
+                            alt={member.name} 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.error('❌ Erreur chargement image:', member.image_url);
+                              // Cacher l'image en erreur
+                              e.currentTarget.style.display = 'none';
+                              // Afficher le fallback
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) {
+                                const fallback = parent.querySelector('.image-fallback');
+                                if (fallback) {
+                                  fallback.classList.remove('hidden');
+                                }
+                              }
+                            }}
+                          />
+                          {/* Fallback qui s'affiche en cas d'erreur */}
+                          <div className="image-fallback absolute inset-0 w-full h-full flex items-center justify-center bg-gray-800 hidden">
+                            <User className="w-8 h-8 text-gray-500" />
+                          </div>
+                        </>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <User className="w-8 h-8 text-gray-500" />
@@ -451,7 +518,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
                       )}
                     </div>
 
-                    {/* Infos */}
+                    {/* Infos membre */}
                     <div className="flex-1 min-w-0">
                       <h4 className="text-lg font-semibold text-white truncate">{member.name}</h4>
                       <p className="text-[#e38f00] text-sm truncate">{member.position}</p>
@@ -466,6 +533,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
                         onClick={() => handleEdit(member)}
                         className="p-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 rounded-lg transition-all"
                         disabled={isUploading}
+                        title="Modifier"
                       >
                         <Edit2 size={18} />
                       </button>
@@ -473,6 +541,7 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
                         onClick={() => handleDelete(member.id)}
                         className="p-2 bg-red-600/20 hover:bg-red-600/40 text-red-300 rounded-lg transition-all"
                         disabled={isUploading}
+                        title="Supprimer"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -485,11 +554,25 @@ export default function TeamManager({ onMemberAdded }: TeamManagerProps) {
         </div>
       )}
 
+      {/* État vide */}
       {members.length === 0 && !isLoading && (
-        <div className="text-center py-12 text-gray-400">
-          <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>Aucun membre dans l'équipe pour le moment</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-16 bg-gray-900/50 border border-gray-800 rounded-2xl"
+        >
+          <User className="w-16 h-16 mx-auto mb-4 text-gray-500" />
+          <p className="text-gray-400 text-lg mb-2">Aucun membre dans l'équipe</p>
+          <p className="text-gray-500 mb-6">Commencez par ajouter votre premier membre</p>
+          {!showForm && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-gradient-to-r from-[#e38f00] to-[#d48500] text-white px-8 py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-[#e38f00]/30 transition-all"
+            >
+              Ajouter un membre
+            </button>
+          )}
+        </motion.div>
       )}
     </div>
   );

@@ -168,6 +168,7 @@ const config: Config = {
         '4xl': '80px',
       },
     },
+    
   },
   plugins: [
     // Supprimez le plugin @tailwindcss/forms qui n'est pas installé
@@ -216,5 +217,6 @@ const config: Config = {
     }
   ],
 }
+
 
 export default config

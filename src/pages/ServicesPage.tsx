@@ -106,8 +106,11 @@ export default function ServicesPage() {
       title: 'Support',
       description: 'Accompagnement continu et améliorations.'
     }
+
+    
   ]
 
+  
   return (
     <div className="min-h-screen w-full bg-white dark:bg-black transition-colors duration-500 pt-24 pb-12">
       
@@ -253,70 +256,194 @@ export default function ServicesPage() {
         </div>
       </div>
 
-      {/* Process Section */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        className="bg-gray-50 dark:bg-black/50 py-20 mb-20"
+
+      {/* SECTION SOLUTIONS SUR-MESURE & SECTEURS */}
+<section className="w-full py-16 md:py-20 lg:py-24 bg-gradient-to-b from-white via-gray-50/80 to-white dark:from-black dark:via-gray-950/80 dark:to-black">
+  <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+
+    {/* Titre secondaire */}
+    <div className="text-center mb-10 md:mb-12">
+      <motion.h3
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white"
       >
-        <div className="w-4/5 mx-auto">
-          <h2 className="text-5xl font-black text-center text-gray-900 dark:text-white mb-16">Notre Processus</h2>
-          
-          <div className="grid md:grid-cols-5 gap-4">
-            {process.map((item, i) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="relative"
-              >
-                <div className="bg-white dark:bg-black/30 backdrop-blur rounded-2xl p-6 border border-gray-200 dark:border-white/10 text-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#e38f00] to-[#d48500] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
-                    {item.step}
-                  </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-2">{item.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
-                </div>
-                
-                {i < process.length - 1 && (
-                  <div className="hidden md:block absolute top-1/3 -right-2 w-4 h-0.5 bg-gradient-to-r from-[#e38f00] to-transparent"></div>
-                )}
-              </motion.div>
+        Des solutions adaptées à votre secteur
+      </motion.h3>
+      <motion.p
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        className="mt-3 text-lg md:text-xl text-gray-600 dark:text-gray-300"
+      >
+        Bénéficiez de notre expertise métier pour des résultats concrets
+      </motion.p>
+    </div>
+
+    {/* Bloc 2 : Les secteurs */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      {[
+        {
+          title: "Hôtellerie",
+          points: [
+            "Parcours client fluidifié (réservation en ligne, check-in digital)",
+            "Gestion interne optimisée (suivi des chambres, maintenance)",
+            "Intégration PMS existant"
+          ],
+          link: "/secteurs/hotellerie"
+        },
+        {
+          title: "Supermarché",
+          points: [
+            "Achats simplifiés (scan, promotions ciblées)",
+            "Gestion améliorée (stocks temps réel, analyse ventes)",
+            "Compatible tous systèmes de caisse"
+          ],
+          link: "/secteurs/supermarche"
+        },
+        {
+          title: "Santé & Pharmacies",
+          points: [
+            "Gestion des ordonnances (scan, rappel renouvellement)",
+            "Suivi des stocks (alertes automatiques)",
+            "Programmes de fidélisation santé"
+          ],
+          link: "/secteurs/sante"
+        },
+        {
+          title: "Agro-Alimentaire",
+          points: [
+            "Gestion des commandes (suivi temps réel)",
+            "Contrôle qualité (enregistrement lots)",
+            "Programmes promotionnels ciblés"
+          ],
+          link: "/secteurs/agroalimentaire"
+        },
+        {
+          title: "Restaurant",
+          points: [
+            "Commande QR code et menu digital",
+            "Paiement sans contact",
+            "Gestion centralisée commandes/stocks"
+          ],
+          link: "/secteurs/restaurant"
+        },
+        {
+          title: "Hôpital",
+          points: [
+            "Dossier patient électronique HDS",
+            "Rendez-vous intelligents",
+            "Messagerie sécurisée"
+          ],
+          link: "/secteurs/hopital"
+        }
+      ].map((item, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: index * 0.1 }}
+          whileHover={{ y: -8, scale: 1.03 }}
+          className="group bg-white dark:bg-gray-900/80 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-gray-200 dark:border-gray-700 hover:border-[#e38f00]/50 hover:shadow-xl transition-all duration-300"
+        >
+          <h3 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-[#e38f00] transition-colors">
+            {item.title}
+          </h3>
+          <ul className="space-y-2 mb-6">
+            {item.points.map((point, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm md:text-base">
+                <CheckCircle className="w-5 h-5 text-[#e38f00] flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700 dark:text-gray-300">{point}</span>
+              </li>
             ))}
+          </ul>
+          <Link
+            to={item.link}
+            className="inline-flex items-center gap-2 text-[#e38f00] font-medium hover:text-[#d48500] transition-colors"
+          >
+            Savoir plus sur ce service
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</section>
+
+{/* SECTION NOS SERVICES DE LOCATION – une seule image jolie */}
+<section className="w-full py-16 md:py-20 lg:py-24 bg-gradient-to-br from-white via-gray-50 to-white dark:from-black dark:via-gray-950 dark:to-black">
+  <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+    <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+      
+      {/* GAUCHE : Une seule image premium */}
+      <motion.div
+        initial={{ opacity: 0, x: -60 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.9 }}
+        className="relative flex justify-center lg:justify-start order-1 lg:order-1"
+      >
+        <div className="relative w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-3xl overflow-hidden shadow-2xl">
+          <div className="relative h-64 md:h-80 lg:h-[500px] overflow-hidden">
+            <motion.img
+              src="https://pugachev.miami/wp-content/uploads/2021/02/rent-lamborghini-huracan-evo-2021-705x444.jpg"
+              alt="Location véhicule premium Vibecro – Lamborghini Huracán élégante"
+              className="w-full h-full object-cover"
+              initial={{ scale: 1.05 }}
+              animate={{ scale: [1.05, 1.12, 1.05] }}
+              transition={{
+                duration: 16,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              loading="lazy"
+            />
+
           </div>
         </div>
       </motion.div>
 
-      {/* Benefits Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
-        <h2 className="text-5xl font-black text-center text-gray-900 dark:text-white mb-16">Pourquoi Nous Choisir</h2>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-          {[
-            { icon: Zap, title: 'Rapidité', desc: 'Livraison agile et itérations rapides.' },
-            { icon: Shield, title: 'Sécurité', desc: 'Standards de sécurité internationaux.' },
-            { icon: MessageSquare, title: 'Support', desc: '24/7 support et maintenance continue.' }
-          ].map((item, i) => {
-            const Icon = item.icon
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center"
-              >
-                <div className="w-20 h-20 bg-gradient-to-br from-[#e38f00] to-[#d48500] rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Icon className="w-10 h-10 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{item.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400">{item.desc}</p>
-              </motion.div>
-            )
-          })}
+      {/* DROITE : Contenu texte (inchangé) */}
+      <motion.div
+        initial={{ opacity: 0, x: 60 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.9, delay: 0.2 }}
+        className="space-y-6 md:space-y-8 text-center lg:text-left order-2 lg:order-2"
+      >
+        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight">
+          Nos Services de Location
+        </h2>
+
+        <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed">
+          Chez Vibecro, nous révolutionnons l'expérience de la location grâce à des solutions sur mesure et un service premium.
+        </p>
+
+        <p className="text-base md:text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
+          Que vous soyez particulier ou professionnel, bénéficiez d'un accès privilégié à une gamme sélectionnée d'équipements, de véhicules et d'espaces, avec la flexibilité et la qualité qui font notre réputation.
+        </p>
+
+        <div className="pt-4">
+          <p className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+            Découvrez une nouvelle façon de louer ! Vibecro vous accompagne
+          </p>
+
+          <Link
+            to="/services/location"
+            className="inline-flex items-center gap-3 bg-gradient-to-r from-[#e38f00] to-[#d48500] text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+          >
+            Découvrir nos offres de location
+            <ArrowRight className="w-5 h-5" />
+          </Link>
         </div>
-      </div>
+      </motion.div>
+    </div>
+  </div>
+</section>
 
       {/* CTA Section */}
       <motion.div

@@ -211,7 +211,7 @@ export default function Footer() {
           >
             {[
               { label: 'Politique de confidentialité', to: '/legal/privacy' },
-              { label: 'Mention Legal', to: '/legal/terms' },
+              { label: ' LegalMention', to: '/legal/terms' },
               { label: 'Gestion des cookies', to: '/legal/cookies' }
             ].map((item, index) => (
               <motion.div
